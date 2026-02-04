@@ -8,13 +8,19 @@
     "start": "node dist/server.js",
     "build": "tsc"
   },
-  "keywords": ["e-commerce", "backend", "api", "typescript"],
+  "keywords": [
+    "e-commerce",
+    "backend",
+    "api",
+    "typescript"
+  ],
   "author": "Satyam Pandey",
   "license": "ISC",
   "description": "E-commerce Backend API with TypeScript",
   "dependencies": {
     "dotenv": "^17.2.3",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "mongoose": "^9.1.5"
   },
   "devDependencies": {
     "@types/dotenv": "^6.1.1",
