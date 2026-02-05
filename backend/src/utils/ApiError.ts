@@ -27,3 +27,7 @@ class ApiError extends Error {
 }
 
 export default ApiError;
+
+// error send like this 
+//throw new ApiError(401, "Invalid credentials");
+
