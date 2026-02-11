@@ -9,7 +9,7 @@ export const registerSchema = z.object({
 
 
 export const loginSchema = z.object({
-    identifier: z.string().min(6,"Identifier must be at least 6 characters long").email("Invalid email"),
+    identifier: z.string().min(6,"Identifier must be at least 6 characters long"),
     password: z.string().min(6,"Password must be at least 6 characters long"),
 })
 

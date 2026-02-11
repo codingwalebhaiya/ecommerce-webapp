@@ -14,7 +14,7 @@ export interface IUser extends Document {
 const userSchema = new Schema<IUser>({
     name: {
         type: String,
-        required: [true, "Name is required"],
+        required: [ false, "Name is required"],
         trim: true,
         lowercase: true
     },
@@ -60,8 +60,8 @@ const userSchema = new Schema<IUser>({
     }
 )
 
-const User = mongoose.model<IUser>("User", userSchema);
+const User = mongoose.model<IUser>("User", userSchema)
 
 //const User = (mongoose.models.User as mongoose.Model<User>) || mongoose.model<User>("User", userSchema); // for nextjs point of view because nextjs work on edge runtime 
 
-export default User
+export default User 
