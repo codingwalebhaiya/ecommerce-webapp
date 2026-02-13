@@ -1,20 +1,11 @@
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema } from "mongoose";
+import { IUserDocument } from "../types/index.js";
 
-export interface IUser extends Document {
-    name: string;
-    username: string;
-    email: string;
-    password: string;
-    role: "USER" | "ADMIN";
-    isActive: boolean;
-    createdAt: Date;
-    updatedAt: Date;
-}
 
-const userSchema = new Schema<IUser>({
+const userSchema = new Schema<IUserDocument>({
     name: {
         type: String,
-        required: [ false, "Name is required"],
+        required: [false, "Name is required"],
         trim: true,
         lowercase: true
     },
@@ -60,7 +51,7 @@ const userSchema = new Schema<IUser>({
     }
 )
 
-const User = mongoose.model<IUser>("User", userSchema)
+const User = mongoose.models.User || mongoose.model<IUserDocument>("User", userSchema)
 
 //const User = (mongoose.models.User as mongoose.Model<User>) || mongoose.model<User>("User", userSchema); // for nextjs point of view because nextjs work on edge runtime 
 

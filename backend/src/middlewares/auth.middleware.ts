@@ -4,28 +4,18 @@ import { verifyAccessToken } from "../utils/jwt.js";
 import User from "../models/user.model.js";
 
 const authMiddleware = asyncHandler(async (req, res, next) => {
-  
+
   const token = req.cookies?.accessToken;
-  console.log(token);
-  
 
   if (!token) {
     throw new ApiError(401, "Unauthorized")
   }
-
   const decoded = verifyAccessToken(token);
-  console.log(decoded.email);
-  console.log(decoded)
-  
-
   const user = await User.findById(decoded.id).select("-password");
-  
-  
   if (!user) {
     throw new ApiError(401, "Unauthorized")
   }
   req.user = user;
-  
 
   next();
 
