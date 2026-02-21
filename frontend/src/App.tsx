@@ -1,12 +1,18 @@
-import { Button } from "@/components/ui/button"
+import { Routes, Route } from "react-router-dom";
+//import { useAuthStore } from "@/store/auth.store";
+import LoginPage from "@/features/auth/pages/LoginPage";
+import RegisterPage from "@/features/auth/pages/RegisterPage";
+import HomePage from "./features/auth/pages/HomePage";
 
-function App() {
+export default function App() {
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center">
-      <Button>Click me</Button>
-      <h1 className="text-2xl font-bold text-red-800">hello world</h1>
-    </div>
-  )
-}
+    <Routes>
+      <Route  path="/" element={<HomePage/>} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
 
-export default App
+      {/* ================= 404 ================= */}
+      <Route path="*" element={<div>404 Not Found</div>} />
+    </Routes>
+  );
+}
