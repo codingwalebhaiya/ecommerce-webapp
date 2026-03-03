@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormField, FormItem, FormMessage } from "@/components/ui/form";
+import { Link } from "react-router-dom";
 
 export default function LoginPage() {
   const loginMutation = useLogin();
@@ -72,13 +73,20 @@ export default function LoginPage() {
                 disabled={loginMutation.isPending}
               >
                 {loginMutation.isPending ? "Signing in..." : "Login"}
-               
+
 
               </Button>
             </form>
           </Form>
         </CardContent>
+
+        <div className="flex justify-center gap-x-4">
+
+          <p>Have not already account? </p>
+          <Link to={"/register"} className="text-blue-500 text-bold  ">Register</Link>
+        </div>
       </Card>
+
     </div>
   );
 }

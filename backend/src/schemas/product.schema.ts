@@ -14,11 +14,11 @@ export const createProductSchema = z.object({
 })
 
 
-// update product 
+//update product 
 export const updateProductSchema = createProductSchema.partial();
 
 
-// product params 
+//product params 
 export const productParamsSchema = z.object({
     productId: objectIdSchema
 })

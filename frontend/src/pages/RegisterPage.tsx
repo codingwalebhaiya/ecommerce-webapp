@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const RegisterPage = () => {
     const registerMutation = useRegister();
@@ -18,6 +19,7 @@ const RegisterPage = () => {
     const onSubmit = (data: RegisterInput) => {
         registerMutation.mutate(data)
     }
+
 
     return (
         <div className="flex items-center justify-center min-h-screen bg-muted">
@@ -79,15 +81,19 @@ const RegisterPage = () => {
                                 )}
                             />
 
-                            <Button type="submit" className="w-full" disabled={registerMutation.isPending}>
+                            <Button type="submit" className="w-full" disabled={registerMutation.isPending} >
                                 {registerMutation.isPending ? "Registering..." : "Register"}
 
 
                             </Button>
 
-
                         </form>
                     </Form>
+
+                    <div className="flex items-center justify-center gap-x-4 mt-2">
+                        <p>Have already account? </p>
+                        <Link to={"/login"} className="text-blue-500 text-bold  ">Login</Link>
+                    </div>
                 </CardContent>
             </Card>
         </div>

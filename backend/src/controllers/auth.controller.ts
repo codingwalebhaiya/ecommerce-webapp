@@ -29,7 +29,7 @@ const register = asyncHandler(async (req, res) => {
     })
 
 
-    return res.status(201).json(
+    return res.json(
         new ApiResponse(201, "User registered successfully", {
             id: user._id,
             username: user.username,
@@ -64,10 +64,10 @@ const login = asyncHandler(async (req, res) => {
         role: user.role,
     }
 
-    
+
 
     const accessToken = generateAccessToken(payload)
-    
+
 
     const cookieOptions = {
         httpOnly: true,
@@ -75,7 +75,7 @@ const login = asyncHandler(async (req, res) => {
         sameSite: "none" as const,
     }
 
-    return res.cookie("accessToken", accessToken,
+    res.cookie("accessToken", accessToken,
         {
             ...cookieOptions,
             maxAge: 15 * 60 * 1000, // 15 min

@@ -13,9 +13,6 @@ const createProduct = asyncHandler(async (req, res) => {
     new ApiResponse(201, "Product created successfully", newProduct)
   )
 
-
-
-
 })
 
 export { createProduct }
