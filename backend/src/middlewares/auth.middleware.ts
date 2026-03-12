@@ -11,11 +11,16 @@ const authMiddleware = asyncHandler(async (req, res, next) => {
     throw new ApiError(401, "Unauthorized")
   }
   const decoded = verifyAccessToken(token);
-  const user = await User.findById(decoded.id).select("-password");
+  const user = await User.findById(decoded.id).select("-password").lean();
   if (!user) {
     throw new ApiError(401, "Unauthorized")
   }
-  req.user = user;
+
+  req.user = {
+    id: user._id.toString(),
+    email: user.email,
+    role: user.role
+  }
 
   next();
 

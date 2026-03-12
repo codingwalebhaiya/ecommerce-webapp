@@ -1,5 +1,5 @@
 import mongoose, { Schema } from "mongoose";
-import { IUserDocument } from "../types/index.js";
+import { IUserDocument } from "../types/user.types.js";
 
 
 const userSchema = new Schema<IUserDocument>({
@@ -40,9 +40,9 @@ const userSchema = new Schema<IUserDocument>({
         enum: ["USER", "ADMIN"],
         default: "USER"
     },
-    isActive: {
+     isVerified: {
         type: Boolean,
-        default: true
+        default: false
     }
 
 },

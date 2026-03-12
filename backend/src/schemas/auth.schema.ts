@@ -13,5 +13,5 @@ export const loginSchema = z.object({
     password: z.string().min(6,"Password must be at least 6 characters long"),
 })
 
-export type RegisterSchemaType = z.infer<typeof registerSchema>
-export type LoginSchemaType = z.infer<typeof loginSchema>
+export type RegisterInput = z.infer<typeof registerSchema>
+export type LoginInput = z.infer<typeof loginSchema>

@@ -1,73 +1,30 @@
 import User from "../models/user.model.js";
+import { loginSchema, registerSchema } from "../schemas/auth.schema.js";
+import { loginService, registerService } from "../services/auth.service.js";
 import ApiError from "../utils/ApiError.js";
+import ApiResponse from "../utils/ApiResponse.js";
 import asyncHandler from "../utils/asyncHandler.js";
-import bcrypt from "bcryptjs";
-import { generateAccessToken, } from "../utils/jwt.js";
-import { registerSchema, loginSchema } from "../schemas/auth.schema.js";
-import ApiResponse from "../utils/ApiResponse.js"
+import { generateAccessToken, verifyRefreshToken } from "../utils/jwt.js";
+
 
 const register = asyncHandler(async (req, res) => {
-    const data = registerSchema.parse(req.body)
+    const validatedData = registerSchema.parse(req.body)
+    const user = await registerService(validatedData);
 
-    const existingUser = await User.findOne(
-        {
-            $or: [{ email: data.email }, { username: data.username }]
-        }
-    )
-
-    if (existingUser) {
-        throw new ApiError(409, "User already exists")
-    }
-
-    const salt = await bcrypt.genSalt(10);
-
-    const hashedPassword = await bcrypt.hash(data.password, salt);
-
-    const user = await User.create({
-        ...data,
-        password: hashedPassword
-    })
-
-
-    return res.json(
+    return res.status(201).json(
         new ApiResponse(201, "User registered successfully", {
             id: user._id,
             username: user.username,
             email: user.email,
+            role: user.role
         })
     );
 
 })
 
 const login = asyncHandler(async (req, res) => {
-    const { identifier, password } = loginSchema.parse(req.body);
-
-    const user = await User.findOne(
-        {
-            $or: [{ email: identifier }, { username: identifier }]
-        }
-    ).select("+password")
-
-    if (!user) {
-        throw new ApiError(400, "Invalid credentials")
-    }
-
-    const isPasswordValid = await bcrypt.compare(password, user.password)
-
-    if (!isPasswordValid) {
-        throw new ApiError(401, "Invalid credentials")
-    }
-
-    const payload = {
-        id: user._id.toString(),
-        email: user.email,
-        role: user.role,
-    }
-
-
-
-    const accessToken = generateAccessToken(payload)
-
+    const validatedData = loginSchema.parse(req.body);
+    const { user, accessToken, refreshToken } = await loginService(validatedData);
 
     const cookieOptions = {
         httpOnly: true,
@@ -81,18 +38,75 @@ const login = asyncHandler(async (req, res) => {
             maxAge: 15 * 60 * 1000, // 15 min
 
         }
-    ).json(
+    )
+
+    res.cookie("refreshToken", refreshToken,
+        {
+            ...cookieOptions,
+            maxAge: 7 * 60 * 60 * 1000, // 7 days
+        }
+    )
+
+    res.status(200).json(
         new ApiResponse(200, "Login successfully", {
             user: {
                 id: user._id,
                 username: user.username,
                 email: user.email,
+                role: user.role
             },
         })
     )
 
 })
 
+const profile = asyncHandler(async (req, res) => {
+    const userId = req.user.id;
+    if (!userId) {
+        throw new ApiError(401, "Unauthorized")
+    }
+    const user = await User.findById(userId).select("-password");
+    res.json(new ApiResponse(200, "Profile fetched successfully", user))
+
+})
+
+const logout = asyncHandler(async (_req, res) => {
+    res.clearCookie("accessToken")
+    res.clearCookie("refreshToken")
+    res.status(200).json(new ApiResponse(200, "Logged out successfully", ""))
+})
 
 
-export { register, login }
+const refreshAccessToken = asyncHandler(async (req, res) => {
+    const token = req.cookies.refreshToken;
+    if (!token) {
+        throw new ApiError(401, "Unauthorized")
+    }
+
+    const decoded = verifyRefreshToken(token)
+    const payload = {
+        id: decoded.id,
+        email: decoded.email,
+        role: decoded.role,
+    }
+
+    const newAccessToken = generateAccessToken(payload)
+    const cookieOptions = {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none" as const,
+    }
+
+    res.cookie("accessToken", newAccessToken, {
+
+        ...cookieOptions,
+        maxAge: 15 * 60 * 1000, // 15 min
+
+    })
+
+    res.status(200).json(new ApiResponse(200, "New access Token generated successfully", ""))
+})
+
+
+
+export { register, login, profile, logout , refreshAccessToken}

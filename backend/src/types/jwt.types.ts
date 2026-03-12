@@ -1,8 +1,14 @@
-import type { JwtPayload } from "jsonwebtoken";
+import { UserRole } from "./user.types.js";
 
-export interface AccessTokenPayload extends JwtPayload {
-  id: string;
-  email: string;
-  role: "USER" | "ADMIN";
+// JWT PAYLOAD TYPES 
+export interface AccessTokenPayload {
+   id: string;
+   email: string;
+   role: UserRole;
 }
 
+export interface RefreshTokenPayload {
+   id: string;
+   email: string;
+   role: UserRole;
+}
