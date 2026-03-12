@@ -2,7 +2,8 @@ import bcrypt from "bcryptjs";
 import User from "../models/user.model.js";
 import ApiError from "../utils/ApiError.js";
 import { LoginInput, RegisterInput } from "../schemas/auth.schema.js";
-import { generateAccessToken, generateRefreshToken } from "../utils/jwt.js";
+import { generateAccessToken, generateRefreshToken, hashRefreshToken } from "../utils/jwt.js";
+import Session from "../models/session.model.js";
 
 
 const registerService = async (data: RegisterInput) => {
@@ -29,7 +30,11 @@ const registerService = async (data: RegisterInput) => {
 
 }
 
-const loginService = async (data: LoginInput) => {
+
+//Services should not depend on Express req object.
+//So we pass ip and userAgent from controller → service.
+
+const loginService = async (data: LoginInput, ip: string, userAgent: string) => {
     const user = await User.findOne(
         {
             $or: [{ email: data.identifier }, { username: data.identifier }]
@@ -56,6 +61,15 @@ const loginService = async (data: LoginInput) => {
     const accessToken = generateAccessToken(payload)
     const refreshToken = generateRefreshToken(payload)
 
+    const hashedToken = hashRefreshToken(refreshToken)
+
+    await Session.create({
+        user: user._id,
+        refreshToken: hashedToken,
+        ip,
+        userAgent,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+    })
     return { user, accessToken, refreshToken }
 
 }

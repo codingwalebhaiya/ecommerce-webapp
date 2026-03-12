@@ -1,10 +1,11 @@
+import Session from "../models/session.model.js";
 import User from "../models/user.model.js";
 import { loginSchema, registerSchema } from "../schemas/auth.schema.js";
 import { loginService, registerService } from "../services/auth.service.js";
 import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import asyncHandler from "../utils/asyncHandler.js";
-import { generateAccessToken, verifyRefreshToken } from "../utils/jwt.js";
+import { generateAccessToken, generateRefreshToken, hashRefreshToken, verifyRefreshToken } from "../utils/jwt.js";
 
 
 const register = asyncHandler(async (req, res) => {
@@ -24,7 +25,9 @@ const register = asyncHandler(async (req, res) => {
 
 const login = asyncHandler(async (req, res) => {
     const validatedData = loginSchema.parse(req.body);
-    const { user, accessToken, refreshToken } = await loginService(validatedData);
+    const ip = req.ip ?? "unknown";
+    const userAgent = Array.isArray(req.headers["user-agent"]) ? req.headers["user-agent"][0] : (req.headers["user-agent"] ?? "unknown");
+    const { user, accessToken, refreshToken } = await loginService(validatedData, ip, userAgent);
 
     const cookieOptions = {
         httpOnly: true,
@@ -84,6 +87,15 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     }
 
     const decoded = verifyRefreshToken(token)
+
+    const hashedToken = hashRefreshToken(token)
+    const session = await Session.findOne({
+        user: decoded.id,
+        refreshToken: hashedToken
+    })
+
+    if (!session) throw new ApiError(401, "Session expired")
+
     const payload = {
         id: decoded.id,
         email: decoded.email,
@@ -91,6 +103,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     }
 
     const newAccessToken = generateAccessToken(payload)
+    const newRefreshToken = generateRefreshToken(payload)
     const cookieOptions = {
         httpOnly: true,
         secure: true,
@@ -104,9 +117,16 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
     })
 
-    res.status(200).json(new ApiResponse(200, "New access Token generated successfully", ""))
+    res.cookie("refreshToken", newRefreshToken, {
+
+        ...cookieOptions,
+        maxAge: 15 * 60 * 1000, // 15 min
+
+    })
+
+    res.status(200).json(new ApiResponse(200, "New access Token & refresh token generated successfully", ""))
 })
 
 
 
-export { register, login, profile, logout , refreshAccessToken}
+export { register, login, profile, logout, refreshAccessToken }

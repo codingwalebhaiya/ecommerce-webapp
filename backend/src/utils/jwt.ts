@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import { AccessTokenPayload, RefreshTokenPayload } from "../types/jwt.types.js"
 import ApiError from "./ApiError.js";
+import crypto from "crypto"
 
 const generateAccessToken = (payload: AccessTokenPayload): string => {
 
@@ -63,5 +64,12 @@ const verifyRefreshToken = (token: string): RefreshTokenPayload => {
 
 }
 
-export { generateAccessToken, generateRefreshToken, verifyAccessToken , verifyRefreshToken}
+const hashRefreshToken = (token: string) => {
+  return crypto
+    .createHash("sha256")
+    .update(token)
+    .digest("hex")
+}
+
+export { generateAccessToken, generateRefreshToken, verifyAccessToken, verifyRefreshToken, hashRefreshToken }
 
