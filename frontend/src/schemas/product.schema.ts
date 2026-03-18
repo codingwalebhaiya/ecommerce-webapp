@@ -18,8 +18,12 @@ export const createProductSchema = z.object({
     z.object({
       public_id: z.string(),
       secure_url: z.string().url("Invalid image URL"),
+      width: z.number().optional(),
+    height: z.number().optional(),
+    format: z.string().optional(),
+    bytes: z.number().optional(),
     })
-  )
+  ).min(1, "At least one image is required")
 })
 
 export type CreateProductFormValues =

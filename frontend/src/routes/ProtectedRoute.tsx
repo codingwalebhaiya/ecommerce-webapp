@@ -1,14 +1,24 @@
 import { Navigate } from "react-router-dom";
-import { useAuthStore } from "@/store/auth.store";
+import React from "react";
+import { useAuthStore } from "@/store/authStore";
+import { Loader2 } from "lucide-react";
+
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const user = useAuthStore((state) => state.user);
+  const { isAuthenticated, isLoading } = useAuthStore();
 
-  if (!user) {
-    return <Navigate to="/login" replace />;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin" />
+      </div>
+    );
   }
 
-  return <>{children}</>;
+
+  return isAuthenticated ? children : <Navigate to='/login' />
+
 }
 
 
