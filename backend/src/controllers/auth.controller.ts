@@ -1,6 +1,5 @@
-import Session from "../models/session.model.js";
 import User from "../models/user.model.js";
-import { loginSchema, registerSchema } from "../schemas/auth.schema.js";
+import { loginSchema, registerSchema } from "../validators/auth.validator.js"
 import { loginService, registerService } from "../services/auth.service.js";
 import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
@@ -15,7 +14,6 @@ const register = asyncHandler(async (req, res) => {
     return res.status(201).json(
         new ApiResponse(201, "User registered successfully", {
             id: user._id,
-            username: user.username,
             email: user.email,
             role: user.role
         })
@@ -25,9 +23,7 @@ const register = asyncHandler(async (req, res) => {
 
 const login = asyncHandler(async (req, res) => {
     const validatedData = loginSchema.parse(req.body);
-    const ip = req.ip ?? "unknown";
-    const userAgent = Array.isArray(req.headers["user-agent"]) ? req.headers["user-agent"][0] : (req.headers["user-agent"] ?? "unknown");
-    const { user, accessToken, refreshToken } = await loginService(validatedData, ip, userAgent);
+    const { user, accessToken, refreshToken } = await loginService(validatedData);
 
     const cookieOptions = {
         httpOnly: true,
@@ -46,7 +42,7 @@ const login = asyncHandler(async (req, res) => {
     res.cookie("refreshToken", refreshToken,
         {
             ...cookieOptions,
-            maxAge: 7 * 60 * 60 * 1000, // 7 days
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         }
     )
 
@@ -54,7 +50,6 @@ const login = asyncHandler(async (req, res) => {
         new ApiResponse(200, "Login successfully", {
             user: {
                 id: user._id,
-                username: user.username,
                 email: user.email,
                 role: user.role
             },
@@ -64,12 +59,31 @@ const login = asyncHandler(async (req, res) => {
 })
 
 const profile = asyncHandler(async (req, res) => {
-    const userId = req.user.id;
+    const userId = req.user?.id;
     if (!userId) {
         throw new ApiError(401, "Unauthorized")
     }
-    const user = await User.findById(userId).select("-password");
-    res.json(new ApiResponse(200, "Profile fetched successfully", user))
+    const user = await User.findById(userId).select("-password -refreshToken -resetPasswordToken -resetPasswordTokenExpiry");
+
+    const userProfile = {
+        id: user?._id,
+        email: user?.email,
+        role: user?.role,
+        name: user?.name,
+        phone: user?.phone,
+        avatar: user?.avatar,
+        street: user?.street,
+        city: user?.city,
+        state: user?.state,
+        zipCode: user?.zipCode,
+        country: user?.country,
+        isActive: user?.isActive,
+    }
+    res.json(new ApiResponse(
+        200,
+        "Profile fetched successfully",
+        userProfile
+    ))
 
 })
 
@@ -87,14 +101,6 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     }
 
     const decoded = verifyRefreshToken(token)
-
-    const hashedToken = hashRefreshToken(token)
-    const session = await Session.findOne({
-        user: decoded.id,
-        refreshToken: hashedToken
-    })
-
-    if (!session) throw new ApiError(401, "Session expired")
 
     const payload = {
         id: decoded.id,
@@ -120,7 +126,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     res.cookie("refreshToken", newRefreshToken, {
 
         ...cookieOptions,
-        maxAge: 15 * 60 * 1000, // 15 min
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
 
     })
 
