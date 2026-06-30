@@ -4,7 +4,7 @@ import { loginService, registerService } from "../services/auth.service.js";
 import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import asyncHandler from "../utils/asyncHandler.js";
-import { generateAccessToken, generateRefreshToken, hashRefreshToken, verifyRefreshToken } from "../utils/jwt.js";
+import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "../utils/jwt.js";
 
 
 const register = asyncHandler(async (req, res) => {
