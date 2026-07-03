@@ -1,15 +1,15 @@
 import User from "../models/user.model.js";
-import { loginSchema, registerSchema } from "../validators/auth.validator.js"
-import { loginService, registerService } from "../services/auth.service.js";
-import ApiError from "../utils/ApiError.js";
-import ApiResponse from "../utils/ApiResponse.js";
-import asyncHandler from "../utils/asyncHandler.js";
+import { loginSchema, registerSchema } from "../validations/auth.validator.js"
+import { ApiError } from "../utils/ApiError.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "../utils/jwt.js";
+import { authService } from "../services/auth.service.js";
 
 
 const register = asyncHandler(async (req, res) => {
     const validatedData = registerSchema.parse(req.body)
-    const user = await registerService(validatedData);
+    const user = await authService.register(validatedData);
 
     return res.status(201).json(
         new ApiResponse(201, "User registered successfully", {
@@ -23,7 +23,7 @@ const register = asyncHandler(async (req, res) => {
 
 const login = asyncHandler(async (req, res) => {
     const validatedData = loginSchema.parse(req.body);
-    const { user, accessToken, refreshToken } = await loginService(validatedData);
+    const { user, accessToken, refreshToken } = await authService.login(validatedData);
 
     const cookieOptions = {
         httpOnly: true,
@@ -59,7 +59,7 @@ const login = asyncHandler(async (req, res) => {
 })
 
 const profile = asyncHandler(async (req, res) => {
-    const userId = req.user?.id;
+    const userId = req.user?.userId;
     if (!userId) {
         throw new ApiError(401, "Unauthorized")
     }
@@ -103,7 +103,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     const decoded = verifyRefreshToken(token)
 
     const payload = {
-        id: decoded.id,
+        userId: decoded.userId,
         email: decoded.email,
         role: decoded.role,
     }
@@ -135,4 +135,10 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
 
 
-export { register, login, profile, logout, refreshAccessToken }
+export const authController = {
+    register,
+    login,
+    profile,
+    logout,
+    refreshAccessToken
+}

@@ -9,10 +9,19 @@ const PORT = parseInt(env.PORT || '5000', 10);
 const NODE_ENV = env.NODE_ENV || 'development';
 
 const startServer = async () => {
-    await connectDatabase();
-    app.listen(PORT, () => {
-        logger.info(`Server is running on port ${PORT} in ${NODE_ENV} mode`);
-    });
+    try {
+        await connectDatabase();
+
+        app.listen(PORT, () => {
+            logger.info(
+                `Server running on http://localhost:${PORT} (${NODE_ENV})`
+            );
+        });
+    } catch (error) {
+        logger.error(error);
+
+        process.exit(1);
+    }
 };
 
 startServer();
