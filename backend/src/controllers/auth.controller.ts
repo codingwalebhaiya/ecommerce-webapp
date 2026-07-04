@@ -1,14 +1,13 @@
 import User from "../models/user.model.js";
-import { loginSchema, registerSchema } from "../validations/auth.validator.js"
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "../utils/jwt.js";
 import { authService } from "../services/auth.service.js";
-
+import {RegisterInput, LoginInput} from "../validations/auth.validation.js"
 
 const register = asyncHandler(async (req, res) => {
-    const validatedData = registerSchema.parse(req.body)
+    const validatedData : RegisterInput = req.body; // this come from validate middleware -> validate.middleware.ts
     const user = await authService.register(validatedData);
 
     return res.status(201).json(
@@ -22,7 +21,7 @@ const register = asyncHandler(async (req, res) => {
 })
 
 const login = asyncHandler(async (req, res) => {
-    const validatedData = loginSchema.parse(req.body);
+    const validatedData :LoginInput = req.body;
     const { user, accessToken, refreshToken } = await authService.login(validatedData);
 
     const cookieOptions = {
@@ -70,13 +69,7 @@ const profile = asyncHandler(async (req, res) => {
         email: user?.email,
         role: user?.role,
         name: user?.name,
-        phone: user?.phone,
         avatar: user?.avatar,
-        street: user?.street,
-        city: user?.city,
-        state: user?.state,
-        zipCode: user?.zipCode,
-        country: user?.country,
         isActive: user?.isActive,
     }
     res.json(new ApiResponse(

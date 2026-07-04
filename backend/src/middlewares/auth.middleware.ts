@@ -1,25 +1,33 @@
-import ApiError from "../utils/ApiError.js";
-import asyncHandler from "../utils/asyncHandler.js";
+import { ApiError } from "../utils/ApiError.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 import { verifyAccessToken } from "../utils/jwt.js";
 import User from "../models/user.model.js";
-import jwt from "jsonwebtoken";
- 
+import { HTTP_STATUS } from "../constants/httpStatus.js";
+import { MESSAGES } from "../constants/messages.js";
+
 const authenticate = asyncHandler(async (req, res, next) => {
   const token = req.cookies?.accessToken;
+
   if (!token) {
-    throw new ApiError(401, "Unauthorized")
+    throw new ApiError(
+      HTTP_STATUS.UNAUTHORIZED,
+      MESSAGES.ACCESS_TOKEN_REQUIRED
+    );
   }
 
 
   try {
-    const decoded: { id: string; email: string; role: 'user' | 'admin' } = verifyAccessToken(token);
-    const user = await User.findById(decoded.id).select("email role").lean();
-    if (!user) {
-      throw new ApiError(401, "Unauthorized")
+    const payload = verifyAccessToken(token);
+    const user = await User.findById(payload.userId).select("email role").lean();
+      if (!user) {
+      throw new ApiError(
+        HTTP_STATUS.UNAUTHORIZED,
+        MESSAGES.UNAUTHORIZED
+      );
     }
 
     req.user = {
-      id: user._id.toString(),
+      userId: user._id.toString(),
       email: user.email,
       role: user.role
     }
@@ -27,11 +35,7 @@ const authenticate = asyncHandler(async (req, res, next) => {
     next();
   }
   catch (error) {
-    // 5. Handle explicit JWT structural errors instead of masking them as 500 errors
-    if (error instanceof jwt.TokenExpiredError) {
-      throw new ApiError(401, "Your login session has expired. Please log in again");
-    }
-    throw new ApiError(401, "Invalid authentication token signature");
+    next(error);
   }
 
 
