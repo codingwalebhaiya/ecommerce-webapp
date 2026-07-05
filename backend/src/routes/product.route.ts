@@ -1,19 +1,35 @@
+
+
 import { Router } from "express";
-import authMiddleware from "../middlewares/auth.middleware.js";
-import authorize from "../middlewares/authorize.middleware.js";
-import { createProduct } from "../controllers/product.controller.js";
+import authenticate from "../middlewares/auth.middleware.js";
+import { productController } from "../controllers/product.controller.js";
+import { uploadProductImages } from "../middlewares/multer.middlware.js";
+import { authorize } from "../middlewares/authorize.middleware.js";
+import { USER_ROLES } from "../constants/roles.js";
+import { validate } from "../middlewares/validate.middleware.js";
+import { createProductSchema, updateProductSchema } from "../validations/product.validation.js";
 
 
-const productRoutes = Router();
+const productRouter = Router();
 
-// by only admin 
-productRoutes.post("/", authMiddleware, authorize("ADMIN"), createProduct);
-//  productRoutes.patch("/:productId", authMiddleware, authorize("ADMIN"), updateProduct);
-//  productRoutes.delete("/:productId", authMiddleware, authorize("ADMIN"), deleteProduct);
+productRouter.post(
+    "/upload-images",
+    authenticate,
+    authorize(USER_ROLES.ADMIN),
+    uploadProductImages.array("images", 3),
+    productController.imagesToCloudinary
+);
+
+//productRouter.delete("/:productId/images/:imageId", authenticate, authorize(USER_ROLES.ADMIN), productController.deleteProductImage)
+
+productRouter.post("/", authenticate, authorize(USER_ROLES.ADMIN), validate({ body: createProductSchema }), productController.createProduct)
+productRouter.get("/", productController.getAllProducts)
+productRouter.get("/:productId", productController.getProductById)
+
+productRouter.patch("/:productId", authenticate, authorize(USER_ROLES.ADMIN), validate({ body: updateProductSchema }), productController.updateProduct)
+productRouter.delete("/:productId", authenticate, authorize(USER_ROLES.ADMIN), productController.deleteProduct)
+productRouter.get("/featured", productController.getFeaturedProducts);
 
 
-// // by all users
-// productRoutes.get("/", getAllProducts);
-// productRoutes.get("/:productId", getProductById);
+export default productRouter;
 
-export default productRoutes;  

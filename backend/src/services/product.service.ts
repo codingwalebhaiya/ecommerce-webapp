@@ -49,7 +49,7 @@ const createProduct = async (
             images: data.images,
             slug,
             stock: data.stock,
-            brand:data.brand
+            brand: data.brand
 
         })
 
@@ -155,11 +155,24 @@ const getAllProducts = async (filters: ProductQueryInput) => {
     return { products, totalResults };
 }
 
+const getFeaturedProducts = async (limitCount: number = 8) => {
+    // Leverages your exact 'productSchema.index({ isFeatured: 1, isActive: 1 })' compound index!
+    const products = await Product.find({ isFeatured: true, isActive: true })
+        .sort({ createdAt: -1 }) // Show newly pinned features first
+        .limit(limitCount)
+        .select('name price images brand slug description') // Lean payload selection (skip heavy text fields)
+        .lean();
+
+    return products;
+
+};
+
 export const productService = {
     uploadProductImages,
     createProduct,
     updateProduct,
     deleteProduct,
     getProductById,
-    getAllProducts
+    getAllProducts,
+    getFeaturedProducts
 }

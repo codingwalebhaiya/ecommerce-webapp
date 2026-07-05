@@ -92,6 +92,17 @@ const getAllProducts = asyncHandler(async (req, res) => {
     });
 })
 
+const getFeaturedProducts = asyncHandler(async (req, res) => {
+    // Allow the frontend to optionally request ?limit=4 for a small row grid layout
+    const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 8;
+    const products = await productService.getFeaturedProducts(limit);
+    return res.status(200).json({
+        success: true,
+        count: products.length,
+        products
+    });
+})
+
 
 export const productController = {
     imagesToCloudinary,
@@ -100,4 +111,5 @@ export const productController = {
     deleteProduct,
     getProductById,
     getAllProducts,
+    getFeaturedProducts
 }
