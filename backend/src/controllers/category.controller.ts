@@ -1,14 +1,12 @@
-import asyncHandler from "../utils/asyncHandler.js";
-import ApiError from "../utils/ApiError.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { ApiError } from "../utils/ApiError.js";
 import Category from "../models/category.model.js";
-import { createCategorySchema } from "../validators/category.validator.js";
-
+import slugify from "slugify"
 
 
 const createCategory = asyncHandler(async (req, res) => {
 
-    const { name } = createCategorySchema.parse(req.body)
-
+    const {name } = req.body;
     if (!name) {
         throw new ApiError(400, "Category name is required");
     }
@@ -18,7 +16,7 @@ const createCategory = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Category already exists");
     }
 
-    const slug = name.toLowerCase().trim().replace(/\s+/g, '-');
+   const slug = slugify(name, {lower: true, trim: true});
 
     const category = await Category.create({
         name,
@@ -34,46 +32,61 @@ const createCategory = asyncHandler(async (req, res) => {
 
 const getAllCategories = asyncHandler(async (req, res) => {
 
-    const categories = await Category.find();
+    const allCategories = await Category.find();
 
     return res.status(200).json({
         success: true,
         message: "Categories fetched successfully",
-        data: categories
+        data: allCategories
     });
 })
 
-const deleteCategory = asyncHandler(async (req, res) => {
-
-    const { id } = req.params;
-    if (!id) {
+const getCategoryById = asyncHandler(async (req, res) => {
+    const { categoryId } = req.params;
+    if (!categoryId) {
         throw new ApiError(400, "Category ID is required");
     }
 
-    const category = await Category.findByIdAndDelete(id);
+    const category = await Category.findById(categoryId);
     if (!category) {
         throw new ApiError(404, "Category not found");
     }
 
     return res.status(200).json({
         success: true,
-        message: "Category deleted successfully",
+        message: "Category fetched successfully",
         data: category
+    });
+})
+
+
+const deleteCategory = asyncHandler(async (req, res) => {
+    const { categoryId } = req.params;
+    if (!categoryId) {
+        throw new ApiError(400, "Category ID is required");
+    }
+
+    await Category.findByIdAndDelete(categoryId);
+
+    return res.status(200).json({
+        success: true,
+        message: "Category deleted successfully",
+        data: ""
     });
 })
 
 const updateCategory = asyncHandler(async (req, res) => {
 
-    const { name, isActive } = req.body;
+    const { name } = req.body;
 
-    const { id } = req.params;
-    if (!id) {
+    const { categoryId } = req.params;
+    if (!categoryId) {
         throw new ApiError(400, "Category ID is required");
     }
 
     const slug = name.toLowerCase().trim().replace(/\s+/g, '-');
 
-    const category = await Category.findByIdAndUpdate(id, { name, isActive, slug }, { new: true });
+    const category = await Category.findByIdAndUpdate(categoryId, { name, slug, isActive: false }, { new: true });
     if (!category) {
         throw new ApiError(404, "Category not found");
     }
@@ -86,4 +99,12 @@ const updateCategory = asyncHandler(async (req, res) => {
 })
 
 
-export { createCategory, getAllCategories, deleteCategory, updateCategory }
+
+export const categoryController = {
+    createCategory,
+    getAllCategories,
+    deleteCategory,
+    updateCategory,
+    getCategoryById,
+
+}

@@ -62,7 +62,7 @@ const profile = asyncHandler(async (req, res) => {
     if (!userId) {
         throw new ApiError(401, "Unauthorized")
     }
-    const user = await User.findById(userId).select("-password -refreshToken -resetPasswordToken -resetPasswordTokenExpiry");
+    const user = await User.findById(userId).select("-password -refreshToken");
 
     const userProfile = {
         id: user?._id,
