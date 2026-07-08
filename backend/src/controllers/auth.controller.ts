@@ -4,15 +4,15 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "../utils/jwt.js";
 import { authService } from "../services/auth.service.js";
-import {RegisterInput, LoginInput} from "../validations/auth.validation.js"
+import { RegisterInput, LoginInput } from "../validations/auth.validation.js"
 
 const register = asyncHandler(async (req, res) => {
-    const validatedData : RegisterInput = req.body; // this come from validate middleware -> validate.middleware.ts
+    const validatedData: RegisterInput = req.body; // this come from validate middleware -> validate.middleware.ts
     const user = await authService.register(validatedData);
 
     return res.status(201).json(
         new ApiResponse(201, "User registered successfully", {
-            id: user._id,
+            id: user._id.toString(),
             email: user.email,
             role: user.role
         })
@@ -21,7 +21,7 @@ const register = asyncHandler(async (req, res) => {
 })
 
 const login = asyncHandler(async (req, res) => {
-    const validatedData :LoginInput = req.body;
+    const validatedData: LoginInput = req.body;
     const { user, accessToken, refreshToken } = await authService.login(validatedData);
 
     const cookieOptions = {
@@ -48,7 +48,7 @@ const login = asyncHandler(async (req, res) => {
     res.status(200).json(
         new ApiResponse(200, "Login successfully", {
             user: {
-                id: user._id,
+                id: user._id.toString(),
                 email: user.email,
                 role: user.role
             },
@@ -59,20 +59,22 @@ const login = asyncHandler(async (req, res) => {
 
 const profile = asyncHandler(async (req, res) => {
     const userId = req.user?.userId;
-    if (!userId) {
-        throw new ApiError(401, "Unauthorized")
+
+    const user = await User.findById(userId).select("-password -refreshToken").lean();
+
+    if(!user){
+        throw new ApiError(404, "User not found")
     }
-    const user = await User.findById(userId).select("-password -refreshToken");
 
     const userProfile = {
-        id: user?._id,
+        id: user?._id.toString(),
         email: user?.email,
         role: user?.role,
         name: user?.name,
         avatar: user?.avatar,
         isActive: user?.isActive,
     }
-    res.json(new ApiResponse(
+    res.status(200).json(new ApiResponse(
         200,
         "Profile fetched successfully",
         userProfile
