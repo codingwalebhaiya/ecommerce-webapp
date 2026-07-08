@@ -1,84 +1,117 @@
-import { Routes, Route } from "react-router-dom";
-import { useAuthStore } from "./store/authStore";
-import { useCheckAuth } from "./hooks/useAuth";
+import { Routes, Route, Navigate } from "react-router-dom";
+import PublicLayout from "@/components/layout/PublicLayout";
+import UserLayout from "@/components/layout/UserLayout";
+import AdminLayout from "@/components/layout/AdminLayout";
+import ProtectedRoute from "@/routes/ProtectedRoute";
+import AdminRoute from "@/routes/AdminRoute";
+
+import HomePage from "@/pages/HomePage";
+import LoginPage from "@/pages/LoginPage";
+import RegisterPage from "@/pages/RegisterPage";
+import ProductsPage from "@/pages/ProductsPage";
+import ProfilePage from "@/pages/ProfilePage";
+//import CreateProductPage from "@/pages/CreateProductPage";
+
+import UserDashboardPage from "@/pages/user/UserDashboardPage";
+import AdminDashboardPage from "@/pages/admin/AdminDashboardPage";
 import { useEffect } from "react";
-import { Loader2 } from "lucide-react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import ProtectedRoute from "./routes/ProtectedRoute";
-import AdminRoute from "./routes/AdminRoute";
-import ProfilePage from "./pages/ProfilePage";
-import CreateProductPage from "./pages/CreateProductPage";
-import { Toaster } from "sonner";
-import LoginPage from "./pages/LoginPage";
-import RegisterPage from "./pages/RegisterPage";
-import HomePage from "./pages/HomePage";
-import Navbar from "./components/common/Navbar";
+import { useProfile } from "./hooks/useAuth";
+import { useAuthStore } from "./redux/authStore";
+import { LoaderCircleIcon } from "lucide-react";
+import UserListPage from "./pages/admin/users/UserListPage";
+import UserDetailsPage from "./pages/admin/users/UserDetailsPage";
+import ProductListPage from "./pages/admin/products/ProductListPage";
+import CreateProductPage from "./pages/admin/products/CreateProductPage";
+import EditProductPage from "./pages/admin/products/EditProductPage";
 
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false
-    }
-  }
-})
+export default function App() {
+  const { data, isLoading } = useProfile()
+  const { setUser, clearAuth } = useAuthStore()
 
-// App Initializer component to check auth on load
-const AppInitializer = ({ children }: { children: React.ReactNode }) => {
-  const { setLoading } = useAuthStore();
-  const { isLoading: isChecking } = useCheckAuth();
 
   useEffect(() => {
-    setLoading(isChecking);
-  }, [isChecking, setLoading]);
+    if (isLoading) return;
 
-  if (isChecking) {
+    if (data?.data) {
+      setUser(data.data);
+    } else {
+      clearAuth();
+    }
+  }, [data, isLoading]);
+
+
+  if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin" />
+      <div className="flex items-center justify-center h-screen">
+        <LoaderCircleIcon className="h-6 w-6 animate-spin mr-2" />
       </div>
     );
   }
 
-  return <>{children}</>;
-};
-
-
-
-export default function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AppInitializer>
-        <div className="min-h-screen flex flex-col">
-          <Navbar />
-          <Routes>
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route
-              path="/profile"
-              element={
-                <ProtectedRoute>
-                  <ProfilePage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/products/create"
-              element={
-                <AdminRoute>
-                  <CreateProductPage />
-                </AdminRoute>
-              }
-            />
-            <Route path="/" element={<HomePage />} />
-          </Routes>
+    <>
 
-        </div>
-      </AppInitializer>
 
-      <Toaster position="top-right" richColors />
-    </QueryClientProvider>
 
+
+      <Routes>
+        {/* Public Routes under PublicLayout (has general Navbar and Footer) */}
+        <Route element={<PublicLayout />}>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/products" element={<ProductsPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+        </Route>
+
+        {/* Protected User Routes under UserLayout */}
+        <Route
+          element={
+            <ProtectedRoute  >
+              <UserLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route path="/dashboard" element={<UserDashboardPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/cart" element={<div className="p-6 text-center text-xl font-semibold">Shopping Cart (Interface Pending)</div>} />
+          <Route path="/orders" element={<div className="p-6 text-center text-xl font-semibold">My Orders (Interface Pending)</div>} />
+        </Route>
+
+        {/* Protected Admin Routes under AdminLayout */}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <AdminRoute>
+                <AdminLayout />
+              </AdminRoute>
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<AdminDashboardPage />} />
+          {/* <Route path="profile" element={<AdminProfilePage />} /> */}
+          <Route path="users" element={<UserListPage />} />
+          <Route path="users/:id" element={<UserDetailsPage />} />
+          <Route path="products" element={<ProductListPage />} />
+          <Route path="products/create" element={<CreateProductPage />} />
+          <Route path="products/:id/edit" element={<EditProductPage />} />
+          {/* <Route path="categories" element={<CategoryListPage />} />
+          <Route path="categories/create" element={<CreateCategoryPage />} />
+          <Route path="categories/:id/edit" element={<EditCategoryPage />} />
+          <Route path="orders" element={<OrderListPage/>}  />
+          <Route path="orders/:id" element={<OrderDetailsPage/>}  />  */}
+
+
+        </Route>
+
+        {/* Fallback Catch-all -> Redirects to Home */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+
+      </Routes>
+
+
+    </>
   );
 }
